@@ -17,7 +17,8 @@
     "lint:fix": "eslint 'src/**/*.{ts,tsx}' --fix",
     "format": "prettier --write 'src/**/*.{ts,tsx}'",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "prepare": "husky"
+    "prepare": "husky",
+    "lint-staged": "lint-staged"
   },
   "keywords": [
     "react",
@@ -27,9 +28,11 @@
     "performance",
     "large-list"
   ],
-  "author": "",
+  "author": "Ebad Yousefzadeh",
   "license": "MIT",
   "devDependencies": {
+    "@commitlint/cli": "^19.8.0",
+    "@commitlint/config-conventional": "^19.8.0",
     "@eslint/js": "^9.24.0",
     "@rollup/plugin-typescript": "^12.1.2",
     "@types/bun": "latest",
