@@ -1,0 +1,21 @@
+{
+  "name": "react-use-pin-list-example",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-use-pin-list": "file:.."
+  },
+  "scripts": {
+    "start": "vite --port 3000",
+    "build": "vite build"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.47",
+    "@types/react-dom": "^18.2.18",
+    "@vitejs/plugin-react": "^4.2.1",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.11"
+  }
+}
