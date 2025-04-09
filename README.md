@@ -136,30 +136,32 @@ const { pinnedItems /* ... */ } = usePinList(items, {
 });
 ```
 
-### With Redux
+### With Zustand
 
 ```tsx
-// In your Redux slice
-const pinnedItemsSlice = createSlice({
-  name: 'pinnedItems',
-  initialState: { ids: [] },
-  reducers: {
-    setPinnedIds: (state, action) => {
-      state.ids = action.payload;
-    },
-  },
-});
+// Create a Zustand store for pinned items
+import { create } from 'zustand';
+
+interface PinnedItemsState {
+  pinnedIds: Array<string | number>;
+  setPinnedIds: (ids: Array<string | number>) => void;
+}
+
+const usePinnedItemsStore = create<PinnedItemsState>((set) => ({
+  pinnedIds: [],
+  setPinnedIds: (ids) => set({ pinnedIds: ids }),
+}));
 
 // In your component
-const dispatch = useDispatch();
-const pinnedIds = useSelector((state) => state.pinnedItems.ids);
+const { pinnedIds } = usePinnedItemsStore();
+const setPinnedIds = usePinnedItemsStore((state) => state.setPinnedIds);
 
 const { pinnedItems /* ... */ } = usePinList(items, {
   getItemId: (item) => item.id,
-  initialPinnedIds: pinnedIds, // From Redux store
+  initialPinnedIds: pinnedIds, // From Zustand store
   onPinnedItemsChange: (items) => {
-    // Update Redux store when items change
-    dispatch(setPinnedIds(items.map((item) => item.id)));
+    // Update Zustand store when items change
+    setPinnedIds(items.map((item) => item.id));
   },
 });
 ```
@@ -199,7 +201,7 @@ const result = usePinList(items, options);
 ## Performance Considerations
 
 - The hook uses memoization extensively to prevent unnecessary recalculations
-- For very large lists, consider using virtualization libraries like `react-window` or `react-virtualized` alongside this hook
+- For very large lists, consider using virtualization libraries like [TanStack Virtual](https://tanstack.com/virtual/latest) alongside this hook
 - The hook uses Sets and Maps internally for O(1) lookups
 - Optimized for minimal bundle size to reduce your application's overall footprint
 
