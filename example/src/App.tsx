@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { usePinList } from '../../src/';
+import { usePinList } from 'react-use-pin-list';
 import { STORAGE_KEY, ITEM_COUNTS } from './constant';
 import type { Item } from './types';
 
@@ -9,6 +9,7 @@ const loadPinnedIds = () => {
     const savedIds = localStorage.getItem(STORAGE_KEY);
     return savedIds ? JSON.parse(savedIds) : fallbackIds;
   } catch (error) {
+    console.error('Error loading pinned IDs from localStorage:', error);
     return fallbackIds;
   }
 };

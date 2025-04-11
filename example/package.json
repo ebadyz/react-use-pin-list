@@ -3,19 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-use-pin-list": "file:.."
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-use-pin-list": "link:../"
   },
   "scripts": {
     "start": "vite --port 3000",
     "build": "vite build"
   },
   "devDependencies": {
-    "@types/react": "^18.2.47",
-    "@types/react-dom": "^18.2.18",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.2",
     "@vitejs/plugin-react": "^4.2.1",
-    "typescript": "^5.3.3",
+    "typescript": "^5.8.3",
     "vite": "^5.0.11"
   }
 }
