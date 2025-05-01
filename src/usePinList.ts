@@ -1,25 +1,25 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { UsePinListOptions, UsePinListResult } from './types';
+import { PinListOptions, PinListResult, ItemId } from './types';
 
 /**
- * React hook for efficiently managing pinned items in large lists
- * @param items The array of items to manage
- * @param options Configuration options
- * @returns Hook result with pinned items, methods and helpers
+ * React hook for managing a list of pinnable items
+ * @param items Array of items to manage
+ * @param options Configuration options for the pin list
+ * @returns Combined state and actions for managing pinned items
  */
-export const usePinList = <T>(items: T[], options: UsePinListOptions<T>): UsePinListResult<T> => {
-  const { getItemId, initialPinnedIds = [], onPinnedItemsChange, maxPinnedItems } = options;
+export const usePinList = <T>(items: T[], options: PinListOptions<T>): PinListResult<T> => {
+  const { getItemId, defaultPinnedIds = [], onPinnedItemsChange, maxPinnedItems } = options;
 
-  const [pinnedIds, setPinnedIds] = useState<Set<string | number>>(() => {
+  const [pinnedIds, setPinnedIds] = useState<Set<ItemId>>(() => {
     const limitedIds = maxPinnedItems
-      ? initialPinnedIds.slice(0, maxPinnedItems)
-      : initialPinnedIds;
+      ? defaultPinnedIds.slice(0, maxPinnedItems)
+      : defaultPinnedIds;
 
     return new Set(limitedIds);
   });
 
   const itemIdMap = useMemo(() => {
-    const map = new Map<T, string | number>();
+    const map = new Map<T, ItemId>();
     items.forEach((item) => {
       map.set(item, getItemId(item));
     });
@@ -27,7 +27,7 @@ export const usePinList = <T>(items: T[], options: UsePinListOptions<T>): UsePin
   }, [items, getItemId]);
 
   const idToItemMap = useMemo(() => {
-    const map = new Map<string | number, T>();
+    const map = new Map<ItemId, T>();
     items.forEach((item) => {
       const id = getItemId(item);
       map.set(id, item);
@@ -39,13 +39,13 @@ export const usePinList = <T>(items: T[], options: UsePinListOptions<T>): UsePin
     if (onPinnedItemsChange) {
       const pinnedItems = Array.from(pinnedIds)
         .map((id) => idToItemMap.get(id))
-        .filter((item) => item !== undefined);
+        .filter((item): item is T => item !== undefined);
       onPinnedItemsChange(pinnedItems);
     }
   }, [pinnedIds, idToItemMap, onPinnedItemsChange]);
 
   const getItem = useCallback(
-    (itemOrId: T | string | number) => {
+    (itemOrId: T | ItemId) => {
       if (typeof itemOrId === 'string' || typeof itemOrId === 'number') {
         return idToItemMap.get(itemOrId);
       }
@@ -55,7 +55,7 @@ export const usePinList = <T>(items: T[], options: UsePinListOptions<T>): UsePin
   );
 
   const getId = useCallback(
-    (itemOrId: T | string | number) => {
+    (itemOrId: T | ItemId) => {
       if (typeof itemOrId === 'string' || typeof itemOrId === 'number') {
         return itemOrId;
       }
@@ -65,18 +65,18 @@ export const usePinList = <T>(items: T[], options: UsePinListOptions<T>): UsePin
     [itemIdMap, getItemId]
   );
 
-  const hasPinnedId = useCallback((id: string | number) => pinnedIds.has(id), [pinnedIds]);
+  const hasPinnedId = useCallback((id: ItemId) => pinnedIds.has(id), [pinnedIds]);
 
-  const isPinned = useCallback(
-    (itemOrId: T | string | number) => {
+  const onPinStatus = useCallback(
+    (itemOrId: T | ItemId) => {
       const id = getId(itemOrId);
       return hasPinnedId(id);
     },
     [getId, hasPinnedId]
   );
 
-  const pinItem = useCallback(
-    (itemOrId: T | string | number) => {
+  const onPinItem = useCallback(
+    (itemOrId: T | ItemId) => {
       const item = getItem(itemOrId);
       if (!item) return;
 
@@ -87,7 +87,7 @@ export const usePinList = <T>(items: T[], options: UsePinListOptions<T>): UsePin
 
       if (hasPinnedId(id)) return;
 
-      setPinnedIds((prevPinnedIds: Set<string | number>) => {
+      setPinnedIds((prevPinnedIds) => {
         if (maxPinnedItems && prevPinnedIds.size >= maxPinnedItems) {
           return prevPinnedIds;
         }
@@ -100,12 +100,12 @@ export const usePinList = <T>(items: T[], options: UsePinListOptions<T>): UsePin
     [getItem, getItemId, itemIdMap, hasPinnedId, maxPinnedItems]
   );
 
-  const unpinItem = useCallback(
-    (itemOrId: T | string | number) => {
+  const onUnpinItem = useCallback(
+    (itemOrId: T | ItemId) => {
       const id = getId(itemOrId);
       if (!hasPinnedId(id)) return;
 
-      setPinnedIds((prevPinnedIds: Set<string | number>) => {
+      setPinnedIds((prevPinnedIds) => {
         const newPinnedIds = new Set(prevPinnedIds);
         newPinnedIds.delete(id);
         return newPinnedIds;
@@ -114,25 +114,25 @@ export const usePinList = <T>(items: T[], options: UsePinListOptions<T>): UsePin
     [getId, hasPinnedId]
   );
 
-  const togglePin = useCallback(
-    (itemOrId: T | string | number) => {
+  const onTogglePin = useCallback(
+    (itemOrId: T | ItemId) => {
       const id = getId(itemOrId);
       if (hasPinnedId(id)) {
-        unpinItem(id);
+        onUnpinItem(id);
       } else {
-        pinItem(itemOrId);
+        onPinItem(itemOrId);
       }
     },
-    [getId, hasPinnedId, unpinItem, pinItem]
+    [getId, hasPinnedId, onUnpinItem, onPinItem]
   );
 
-  const clearPinnedItems = useCallback(() => {
+  const onClearPins = useCallback(() => {
     setPinnedIds(new Set());
   }, []);
 
   const pinnedIdsArray = useMemo(() => Array.from(pinnedIds), [pinnedIds]);
 
-  const updatePinOrder = useCallback(
+  const onReorderPin = useCallback(
     (fromIndex: number, toIndex: number) => {
       if (
         fromIndex < 0 ||
@@ -143,7 +143,7 @@ export const usePinList = <T>(items: T[], options: UsePinListOptions<T>): UsePin
         return;
       }
 
-      setPinnedIds((prevPinnedIds: Set<string | number>) => {
+      setPinnedIds((prevPinnedIds) => {
         const pinnedIdsArray = Array.from(prevPinnedIds);
         const [movedId] = pinnedIdsArray.splice(fromIndex, 1);
         pinnedIdsArray.splice(toIndex, 0, movedId);
@@ -156,7 +156,7 @@ export const usePinList = <T>(items: T[], options: UsePinListOptions<T>): UsePin
   const { pinnedItems, unpinnedItems, sortedItems } = useMemo(() => {
     const pinnedItems: T[] = [];
     const unpinnedItems: T[] = [];
-    const pinnedMap = new Map<string | number, T>();
+    const pinnedMap = new Map<ItemId, T>();
 
     items.forEach((item) => {
       const id = itemIdMap.get(item) || getItemId(item);
@@ -170,7 +170,7 @@ export const usePinList = <T>(items: T[], options: UsePinListOptions<T>): UsePin
 
     const orderedPinnedItems = pinnedIdsArray
       .map((id) => pinnedMap.get(id))
-      .filter((item) => item !== undefined);
+      .filter((item): item is T => item !== undefined);
 
     return {
       pinnedItems: orderedPinnedItems,
@@ -180,15 +180,15 @@ export const usePinList = <T>(items: T[], options: UsePinListOptions<T>): UsePin
   }, [items, itemIdMap, getItemId, hasPinnedId, pinnedIdsArray]);
 
   return {
+    pinnedIds,
     pinnedItems,
     unpinnedItems,
     sortedItems,
-    pinnedIds,
-    pinItem,
-    unpinItem,
-    togglePin,
-    isPinned,
-    clearPinnedItems,
-    updatePinOrder,
+    onPinStatus,
+    onPinItem,
+    onUnpinItem,
+    onTogglePin,
+    onClearPins,
+    onReorderPin,
   };
 };
