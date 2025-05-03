@@ -1,2 +1,2 @@
 export { usePinList } from './usePinList';
-export type { UsePinListOptions, UsePinListResult } from './types';
+export type { PinListOptions, PinListResult } from './types';

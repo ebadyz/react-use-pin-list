@@ -1,36 +1,81 @@
 /**
+ * Type representing an item identifier
+ */
+export type ItemId = string | number;
+
+/**
  * Configuration options for the usePinList hook
  */
-export type UsePinListOptions<T> = {
+export type PinListOptions<T> = {
   /**
-   * Unique identifier function to get a unique key for each item
+   * Function to extract a unique identifier from an item
    * @param item The item to get the identifier for
-   * @returns A unique string or number identifier
    */
-  getItemId: (item: T) => string | number;
+  getItemId: (item: T) => ItemId;
 
   /**
-   * Optional initial pinned item IDs
+   * Optional array of initially pinned item IDs
    */
-  initialPinnedIds?: Array<string | number>;
+  defaultPinnedIds?: ItemId[];
 
   /**
    * Optional callback triggered when pinned items change
+   * @param items The current array of pinned items
    */
-  onPinnedItemsChange?: (pinnedItems: T[]) => void;
+  onPinnedItemsChange?: (items: T[]) => void;
 
   /**
-   * Optional maximum number of pinned items
+   * Optional maximum number of items that can be pinned
    */
   maxPinnedItems?: number;
 };
 
 /**
- * Return value of the usePinList hook
+ * Actions available for managing pinned items
  */
-export type UsePinListResult<T> = {
+export type PinListActions<T> = {
   /**
-   * Array of pinned items
+   * Returns the pinned status of an item
+   */
+  onPinStatus: (itemOrId: T | ItemId) => boolean;
+
+  /**
+   * Pin an item to the list
+   */
+  onPinItem: (itemOrId: T | ItemId) => void;
+
+  /**
+   * Unpin an item from the list
+   */
+  onUnpinItem: (itemOrId: T | ItemId) => void;
+
+  /**
+   * Toggle an item's pinned state
+   */
+  onTogglePin: (itemOrId: T | ItemId) => void;
+
+  /**
+   * Remove all pinned items
+   */
+  onClearPins: () => void;
+
+  /**
+   * Reorder a pinned item's position
+   */
+  onReorderPin: (fromIndex: number, toIndex: number) => void;
+};
+
+/**
+ * State values for the pin list
+ */
+export type PinListState<T> = {
+  /**
+   * Set of currently pinned item IDs
+   */
+  pinnedIds: Set<ItemId>;
+
+  /**
+   * Array of pinned items in their current order
    */
   pinnedItems: T[];
 
@@ -40,42 +85,12 @@ export type UsePinListResult<T> = {
   unpinnedItems: T[];
 
   /**
-   * Sorted array with pinned items first, then unpinned items
+   * Combined array of all items with pinned items first
    */
   sortedItems: T[];
-
-  /**
-   * Set of pinned item IDs for fast lookup
-   */
-  pinnedIds: Set<string | number>;
-
-  /**
-   * Function to pin an item
-   */
-  pinItem: (itemOrId: T | string | number) => void;
-
-  /**
-   * Function to unpin an item
-   */
-  unpinItem: (itemOrId: T | string | number) => void;
-
-  /**
-   * Function to toggle an item's pinned state
-   */
-  togglePin: (itemOrId: T | string | number) => void;
-
-  /**
-   * Function to check if an item is pinned
-   */
-  isPinned: (itemOrId: T | string | number) => boolean;
-
-  /**
-   * Function to clear all pinned items
-   */
-  clearPinnedItems: () => void;
-
-  /**
-   * Function to update the pin order (moves a pinned item to a new position)
-   */
-  updatePinOrder: (fromIndex: number, toIndex: number) => void;
 };
+
+/**
+ * Combined return type for the usePinList hook
+ */
+export type PinListResult<T> = PinListState<T> & PinListActions<T>;
