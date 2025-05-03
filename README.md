@@ -1,210 +1,35 @@
 # react-use-pin-list
 
-A high-performance React hook for efficiently managing pinned items in large lists.
+## Getting Started
 
-## Features
+`usePinList` is a high-performance, fully-typed React hook for managing pinned items in large lists. The bundle size is under 1KB gzipped. It can be seamlessly integrated with [TanStack Virtual](https://tanstack.com/virtual/latest) for virtualized lists and [hello-pangea/dnd](https://github.com/hello-pangea/dnd) for drag-and-drop reordering.
 
-- Fast and optimized for large lists (50,000+ items)
-- Tiny bundle size with zero dependencies (< 1KB gzipped)
+- **React version required:** `react` and `react-dom` >=16.8.0 (Hooks support and compatibility)
+
+## Supported Feature Set
+
+- Pin, unpin, and toggle pin state for any item
+- Reorder pinned items (with optional drag-and-drop integration)
+- Limit the maximum number of pinned items
+- Efficient for very large lists
 - TypeScript support with full type definitions
-- No built-in storage dependencies (choose your own storage solution)
-- Customizable with several configuration options
-- Memory-efficient state management
+- No built-in storage dependencies (bring your own persistence)
+- Customizable callbacks for pin state changes
+- Memory-efficient state management (uses Set/Map internally)
+- Works with virtualization libraries (e.g., TanStack Virtual)
+- Works with drag-and-drop libraries (e.g., hello-pangea/dnd)
+- Zero dependencies, minimal bundle size
 
-## Bundle Size
+## Documentation
 
-| Format   | Size   | Gzipped |
-| -------- | ------ | ------- |
-| ESM      | 2.7 KB | 0.97 KB |
-| CommonJS | 1.9 KB | 0.83 KB |
+- [Installation](docs/installation.md)
+- [Quick Start](docs/quick-start.md)
+- [Basic Usage](docs/basic-usage.md)
+- [Advanced Usage](docs/advanced-usage.md)
+- [API Reference](docs/api.md)
 
-## Installation
+For API details, usage patterns, and integration examples, see the relevant markdown files above.
 
-```bash
-# Using npm
-npm install react-use-pin-list
+---
 
-# Using yarn
-yarn add react-use-pin-list
-
-# Using pnpm
-pnpm add react-use-pin-list
-
-# Using bun
-bun add react-use-pin-list
-```
-
-## Usage
-
-```tsx
-import { usePinList } from 'react-use-pin-list';
-
-interface Item {
-  id: string;
-  name: string;
-  // ...other properties
-}
-
-const MyComponent = () => {
-  // Your list of items
-  const items = useMemo(
-    () => [
-      { id: '1', name: 'Item 1' },
-      { id: '2', name: 'Item 2' },
-      // ... more items
-    ],
-    []
-  );
-
-  // Use the hook
-  const {
-    pinnedItems, // Array of pinned items
-    unpinnedItems, // Array of unpinned items
-    sortedItems, // Combined array (pinned first, then unpinned)
-    pinnedIds, // Set of pinned IDs for fast lookup
-    pinItem, // Function to pin an item
-    unpinItem, // Function to unpin an item
-    togglePin, // Function to toggle an item's pinned state
-    isPinned, // Function to check if an item is pinned
-    clearPinnedItems, // Function to clear all pinned items
-    updatePinOrder, // Function to reorder pinned items
-  } = usePinList(items, {
-    getItemId: (item) => item.id, // Function to get a unique ID
-    initialPinnedIds: ['1'], // Optional initial pinned IDs
-    maxPinnedItems: 10, // Optional maximum number of pins
-    onPinnedItemsChange: (pinnedItems) => {
-      // Optional callback when pinned items change
-      console.log(pinnedItems);
-
-      // Example: Save pinned IDs to localStorage
-      localStorage.setItem('my-pinned-items', JSON.stringify(pinnedItems.map((item) => item.id)));
-    },
-  });
-
-  return (
-    <div>
-      <h2>Pinned Items</h2>
-      <ul>
-        {pinnedItems.map((item) => (
-          <li key={item.id}>
-            {item.name}
-            <button onClick={() => unpinItem(item)}>Unpin</button>
-          </li>
-        ))}
-      </ul>
-
-      <h2>All Items</h2>
-      <ul>
-        {sortedItems.map((item) => (
-          <li key={item.id}>
-            {item.name}
-            <button onClick={() => togglePin(item)}>{isPinned(item) ? 'Unpin' : 'Pin'}</button>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-};
-```
-
-## Persisting Pinned Items
-
-The hook doesn't implement any specific storage solution, giving you the freedom to choose your own:
-
-### With localStorage
-
-```tsx
-// Load pinned IDs from localStorage on initialization
-const loadPinnedIds = () => {
-  try {
-    const saved = localStorage.getItem('my-pinned-items');
-    return saved ? JSON.parse(saved) : [];
-  } catch (error) {
-    console.error('Error loading pinned items:', error);
-    return [];
-  }
-};
-
-// In your component
-const { pinnedItems /* ... */ } = usePinList(items, {
-  getItemId: (item) => item.id,
-  initialPinnedIds: loadPinnedIds(), // Load from localStorage
-  onPinnedItemsChange: (items) => {
-    // Save to localStorage when items change
-    localStorage.setItem('my-pinned-items', JSON.stringify(items.map((item) => item.id)));
-  },
-});
-```
-
-### With Zustand
-
-```tsx
-// Create a Zustand store for pinned items
-import { create } from 'zustand';
-
-interface PinnedItemsState {
-  pinnedIds: Array<string | number>;
-  setPinnedIds: (ids: Array<string | number>) => void;
-}
-
-const usePinnedItemsStore = create<PinnedItemsState>((set) => ({
-  pinnedIds: [],
-  setPinnedIds: (ids) => set({ pinnedIds: ids }),
-}));
-
-// In your component
-const { pinnedIds } = usePinnedItemsStore();
-const setPinnedIds = usePinnedItemsStore((state) => state.setPinnedIds);
-
-const { pinnedItems /* ... */ } = usePinList(items, {
-  getItemId: (item) => item.id,
-  initialPinnedIds: pinnedIds, // From Zustand store
-  onPinnedItemsChange: (items) => {
-    // Update Zustand store when items change
-    setPinnedIds(items.map((item) => item.id));
-  },
-});
-```
-
-## API
-
-### usePinList
-
-```tsx
-const result = usePinList(items, options);
-```
-
-#### Options
-
-| Option                | Type                            | Required | Description                                          |
-| --------------------- | ------------------------------- | -------- | ---------------------------------------------------- |
-| `getItemId`           | `(item: T) => string \| number` | Yes      | Function to extract a unique identifier from an item |
-| `initialPinnedIds`    | `Array<string \| number>`       | No       | Array of IDs to initially pin                        |
-| `onPinnedItemsChange` | `(pinnedItems: T[]) => void`    | No       | Callback when pinned items change                    |
-| `maxPinnedItems`      | `number`                        | No       | Maximum number of items that can be pinned           |
-
-#### Return Value
-
-| Property           | Type                                           | Description                                           |
-| ------------------ | ---------------------------------------------- | ----------------------------------------------------- |
-| `pinnedItems`      | `T[]`                                          | Array of pinned items                                 |
-| `unpinnedItems`    | `T[]`                                          | Array of unpinned items                               |
-| `sortedItems`      | `T[]`                                          | Combined array with pinned items first, then unpinned |
-| `pinnedIds`        | `Set<string \| number>`                        | Set of pinned item IDs for fast lookup                |
-| `pinItem`          | `(itemOrId: T \| string \| number) => void`    | Function to pin an item                               |
-| `unpinItem`        | `(itemOrId: T \| string \| number) => void`    | Function to unpin an item                             |
-| `togglePin`        | `(itemOrId: T \| string \| number) => void`    | Function to toggle an item's pinned state             |
-| `isPinned`         | `(itemOrId: T \| string \| number) => boolean` | Function to check if an item is pinned                |
-| `clearPinnedItems` | `() => void`                                   | Function to clear all pinned items                    |
-| `updatePinOrder`   | `(fromIndex: number, toIndex: number) => void` | Function to reorder pinned items                      |
-
-## Performance Considerations
-
-- The hook uses memoization extensively to prevent unnecessary recalculations
-- For very large lists, consider using virtualization libraries like [TanStack Virtual](https://tanstack.com/virtual/latest) alongside this hook
-- The hook uses Sets and Maps internally for O(1) lookups
-- Optimized for minimal bundle size to reduce your application's overall footprint
-
-## License
-
-MIT
+MIT License
